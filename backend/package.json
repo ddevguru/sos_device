@@ -1,0 +1,31 @@
+{
+  "name": "sos-backend",
+  "version": "1.0.0",
+  "description": "Emergency SOS backend API with Express, PostgreSQL, IoT trigger webhooks, and SMS dispatching",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test:iot": "node test_iot_simulator.js"
+  },
+  "keywords": [
+    "sos",
+    "emergency",
+    "iot",
+    "flutter",
+    "express",
+    "postgresql",
+    "sms"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.3",
+    "twilio": "^5.4.5"
+  }
+}
