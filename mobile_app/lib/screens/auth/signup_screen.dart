@@ -16,6 +16,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _smsSenderController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _medicalNotesController = TextEditingController();
 
@@ -31,6 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _smsSenderController.dispose();
     _passwordController.dispose();
     _medicalNotesController.dispose();
     super.dispose();
@@ -51,6 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text,
       bloodGroup: _selectedBloodGroup,
       medicalNotes: _medicalNotesController.text.trim(),
+      smsSenderNumber: _smsSenderController.text.trim(),
     );
 
     if (!mounted) return;
@@ -166,6 +169,26 @@ class _SignupScreenState extends State<SignupScreen> {
                     prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted),
                   ),
                   validator: (v) => (v == null || v.trim().length < 8) ? 'Enter a valid phone number' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // SMS Sender Number (Optional)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('SMS Sender Number (Optional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text('(SMS भेजने वाला नंबर)', style: TextStyle(fontSize: 11, color: AppTheme.accentCyan.withOpacity(0.8))),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _smsSenderController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'Leave empty to use your phone number',
+                    prefixIcon: Icon(Icons.send_to_mobile_rounded, color: AppTheme.accentCyan),
+                  ),
                 ),
                 const SizedBox(height: 16),
 

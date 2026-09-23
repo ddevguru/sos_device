@@ -102,6 +102,20 @@ class StorageService {
     return AppConstants.defaultSosMessageTemplate;
   }
 
+  // Outgoing SMS Sender Number
+  static Future<void> saveSmsSenderNumber(String number) async {
+    await init();
+    await _prefs!.setString(AppConstants.keySmsSenderNumber, number.trim());
+  }
+
+  static String getSmsSenderNumber() {
+    final num = _prefs?.getString(AppConstants.keySmsSenderNumber);
+    if (num != null && num.trim().isNotEmpty) {
+      return num;
+    }
+    return getUser()?.smsSenderNumber ?? getUser()?.phone ?? '';
+  }
+
   // Double-Clap Detection Settings
   static Future<void> setClapDetectionEnabled(bool enabled) async {
     await init();

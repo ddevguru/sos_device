@@ -18,7 +18,10 @@ async function initRenderDb() {
     // Read and execute schema
     const schemaSql = fs.readFileSync(path.join(__dirname, 'src/db/schema.sql'), 'utf8');
     await client.query(schemaSql);
-    console.log('✅ Schema tables verified/created (users, emergency_contacts, iot_devices, sos_alerts).');
+
+    // Apply migration for existing users table
+    await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS sms_sender_number VARCHAR(30) DEFAULT ''");
+    console.log('✅ Schema tables & sms_sender_number column verified/created.');
 
     // Query tables
     const res = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");

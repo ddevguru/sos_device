@@ -5,7 +5,7 @@ const { JWT_SECRET } = require('../middlewares/authMiddleware');
 
 const register = async (req, res) => {
   try {
-    const { name, email, phone, password, blood_group, medical_notes } = req.body;
+    const { name, email, phone, password, blood_group, medical_notes, smsSenderNumber } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({
@@ -27,10 +27,10 @@ const register = async (req, res) => {
     const password_hash = await bcrypt.hash(password, salt);
 
     const result = await db.query(
-      `INSERT INTO users (name, email, phone, password_hash, blood_group, medical_notes) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING id, name, email, phone, blood_group, medical_notes, created_at`,
-      [name.trim(), email.trim().toLowerCase(), phone.trim(), password_hash, blood_group || '', medical_notes || '']
+      `INSERT INTO users (name, email, phone, password_hash, blood_group, medical_notes, sms_sender_number) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING id, name, email, phone, blood_group, medical_notes, sms_sender_number, created_at`,
+      [name.trim(), email.trim().toLowerCase(), phone.trim(), password_hash, blood_group || '', medical_notes || '', smsSenderNumber || phone.trim()]
     );
 
     const newUser = result.rows[0];
@@ -63,7 +63,8 @@ const register = async (req, res) => {
         email: newUser.email,
         phone: newUser.phone,
         bloodGroup: newUser.blood_group,
-        medicalNotes: newUser.medical_notes
+        medicalNotes: newUser.medical_notes,
+        smsSenderNumber: newUser.sms_sender_number || newUser.phone
       }
     });
   } catch (err) {
@@ -116,7 +117,9 @@ const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         bloodGroup: user.blood_group,
-        medicalNotes: user.medical_notes
+        medicalNotes: user.medical_notes,
+        customSosMessage: user.custom_sos_message || '',
+        smsSenderNumber: user.sms_sender_number || user.phone || ''
       }
     });
   } catch (err) {
@@ -129,7 +132,7 @@ const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const result = await db.query(
-      'SELECT id, name, email, phone, blood_group, medical_notes, custom_sos_message, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, phone, blood_group, medical_notes, custom_sos_message, sms_sender_number, created_at FROM users WHERE id = $1',
       [userId]
     );
 
@@ -155,6 +158,7 @@ const getProfile = async (req, res) => {
         bloodGroup: user.blood_group,
         medicalNotes: user.medical_notes,
         customSosMessage: user.custom_sos_message || '',
+        smsSenderNumber: user.sms_sender_number || user.phone || '',
         createdAt: user.created_at,
         contactsCount: parseInt(contactResult.rows[0]?.count || 0, 10)
       }
@@ -168,7 +172,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, phone, bloodGroup, medicalNotes, customSosMessage } = req.body;
+    const { name, phone, bloodGroup, medicalNotes, customSosMessage, smsSenderNumber } = req.body;
 
     const result = await db.query(
       `UPDATE users 
@@ -177,10 +181,11 @@ const updateProfile = async (req, res) => {
            blood_group = COALESCE($3, blood_group),
            medical_notes = COALESCE($4, medical_notes),
            custom_sos_message = COALESCE($5, custom_sos_message),
+           sms_sender_number = COALESCE($6, sms_sender_number),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6
-       RETURNING id, name, email, phone, blood_group, medical_notes, custom_sos_message`,
-      [name, phone, bloodGroup, medicalNotes, customSosMessage, userId]
+       WHERE id = $7
+       RETURNING id, name, email, phone, blood_group, medical_notes, custom_sos_message, sms_sender_number`,
+      [name, phone, bloodGroup, medicalNotes, customSosMessage, smsSenderNumber, userId]
     );
 
     if (result.rows.length === 0) {
@@ -198,7 +203,8 @@ const updateProfile = async (req, res) => {
         phone: updated.phone,
         bloodGroup: updated.blood_group,
         medicalNotes: updated.medical_notes,
-        customSosMessage: updated.custom_sos_message || ''
+        customSosMessage: updated.custom_sos_message || '',
+        smsSenderNumber: updated.sms_sender_number || updated.phone || ''
       }
     });
   } catch (err) {

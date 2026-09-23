@@ -74,7 +74,7 @@ const handleDeviceTrigger = async (req, res) => {
 
     // Fetch user details
     const userRes = await db.query(
-      'SELECT id, name, phone, medical_notes, custom_sos_message FROM users WHERE id = $1',
+      'SELECT id, name, phone, medical_notes, custom_sos_message, sms_sender_number FROM users WHERE id = $1',
       [userId]
     );
 
@@ -101,6 +101,7 @@ const handleDeviceTrigger = async (req, res) => {
     const smsResult = await sendEmergencySMS(contacts, {
       userName: user.name,
       userPhone: user.phone,
+      senderPhone: user.sms_sender_number || user.phone || '',
       latitude: latitude || null,
       longitude: longitude || null,
       medicalNotes: user.medical_notes,

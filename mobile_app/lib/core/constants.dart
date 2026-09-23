@@ -9,6 +9,7 @@ class AppConstants {
   static const String keyOnboardingSeen = 'sos_onboarding_seen';
   static const String keyCustomBaseUrl = 'sos_custom_base_url';
   static const String keyCustomSosMessage = 'sos_custom_sos_message';
+  static const String keySmsSenderNumber = 'sos_sms_sender_number';
   static const String keyClapDetectionEnabled = 'sos_clap_detection_enabled';
   static const String keyClapSensitivity = 'sos_clap_sensitivity';
 

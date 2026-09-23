@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     blood_group VARCHAR(10) DEFAULT '',
     medical_notes TEXT DEFAULT '',
     custom_sos_message TEXT DEFAULT '',
+    sms_sender_number VARCHAR(30) DEFAULT '',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

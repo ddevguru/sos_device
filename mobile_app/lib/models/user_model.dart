@@ -6,6 +6,7 @@ class UserModel {
   final String bloodGroup;
   final String medicalNotes;
   final String customSosMessage;
+  final String smsSenderNumber;
   final int contactsCount;
 
   UserModel({
@@ -16,6 +17,7 @@ class UserModel {
     this.bloodGroup = '',
     this.medicalNotes = '',
     this.customSosMessage = '',
+    this.smsSenderNumber = '',
     this.contactsCount = 0,
   });
 
@@ -28,6 +30,7 @@ class UserModel {
       bloodGroup: json['bloodGroup'] ?? json['blood_group'] ?? '',
       medicalNotes: json['medicalNotes'] ?? json['medical_notes'] ?? '',
       customSosMessage: json['customSosMessage'] ?? json['custom_sos_message'] ?? '',
+      smsSenderNumber: json['smsSenderNumber'] ?? json['sms_sender_number'] ?? '',
       contactsCount: json['contactsCount'] is int ? json['contactsCount'] : 0,
     );
   }
@@ -41,6 +44,7 @@ class UserModel {
       'bloodGroup': bloodGroup,
       'medicalNotes': medicalNotes,
       'customSosMessage': customSosMessage,
+      'smsSenderNumber': smsSenderNumber,
       'contactsCount': contactsCount,
     };
   }
@@ -51,6 +55,7 @@ class UserModel {
     String? bloodGroup,
     String? medicalNotes,
     String? customSosMessage,
+    String? smsSenderNumber,
     int? contactsCount,
   }) {
     return UserModel(
@@ -61,6 +66,7 @@ class UserModel {
       bloodGroup: bloodGroup ?? this.bloodGroup,
       medicalNotes: medicalNotes ?? this.medicalNotes,
       customSosMessage: customSosMessage ?? this.customSosMessage,
+      smsSenderNumber: smsSenderNumber ?? this.smsSenderNumber,
       contactsCount: contactsCount ?? this.contactsCount,
     );
   }

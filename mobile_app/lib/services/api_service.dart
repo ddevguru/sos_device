@@ -37,6 +37,7 @@ class ApiService {
     required String password,
     String? bloodGroup,
     String? medicalNotes,
+    String? smsSenderNumber,
   }) async {
     try {
       final response = await http.post(
@@ -49,6 +50,7 @@ class ApiService {
           'password': password,
           'blood_group': bloodGroup ?? '',
           'medical_notes': medicalNotes ?? '',
+          if (smsSenderNumber != null && smsSenderNumber.isNotEmpty) 'smsSenderNumber': smsSenderNumber,
         }),
       );
 
@@ -123,6 +125,7 @@ class ApiService {
     String? bloodGroup,
     String? medicalNotes,
     String? customSosMessage,
+    String? smsSenderNumber,
   }) async {
     try {
       final response = await http.put(
@@ -134,6 +137,7 @@ class ApiService {
           if (bloodGroup != null) 'bloodGroup': bloodGroup,
           if (medicalNotes != null) 'medicalNotes': medicalNotes,
           if (customSosMessage != null) 'customSosMessage': customSosMessage,
+          if (smsSenderNumber != null) 'smsSenderNumber': smsSenderNumber,
         }),
       );
 

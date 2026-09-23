@@ -43,6 +43,9 @@ function buildEmergencyMessage({ userName, userPhone, latitude, longitude, addre
     if (medicalNotes && !msg.toLowerCase().includes('medical')) {
       msg += `\n💊 Medical: ${medicalNotes}`;
     }
+    if (alertData.senderPhone && !msg.toLowerCase().includes('sender') && !msg.toLowerCase().includes('callback')) {
+      msg += `\n📞 Sender / Callback: ${alertData.senderPhone}`;
+    }
     return msg;
   }
 
@@ -53,6 +56,9 @@ function buildEmergencyMessage({ userName, userPhone, latitude, longitude, addre
   msg += `📍 Live Location: ${mapsLink}\n`;
   if (address) {
     msg += `🏠 Nearby: ${address}\n`;
+  }
+  if (alertData.senderPhone) {
+    msg += `📞 Dispatcher / Sender Number: ${alertData.senderPhone}\n`;
   }
   if (medicalNotes) {
     msg += `💊 Medical Info: ${medicalNotes}\n`;
@@ -76,22 +82,24 @@ async function sendEmergencySMS(contacts, alertData) {
 
   const messageText = buildEmergencyMessage(alertData);
   const provider = (process.env.SMS_PROVIDER || 'mock').toLowerCase();
+  const fromNumber = alertData.senderPhone || process.env.TWILIO_PHONE_NUMBER;
   const results = [];
 
   console.log('\n======================================================');
   console.log('🚨 DISPATCHING EMERGENCY SOS BROADCAST 🚨');
   console.log(`Recipients Count: ${contacts.length}`);
+  console.log(`Sender Phone Number: ${fromNumber || 'Default / Not Set'}`);
   console.log(`Provider: ${provider.toUpperCase()}`);
   console.log('======================================================');
 
   for (const contact of contacts) {
     const recipientPhone = contact.phone;
 
-    if (provider === 'twilio' && twilioClient && process.env.TWILIO_PHONE_NUMBER) {
+    if (provider === 'twilio' && twilioClient && fromNumber) {
       try {
         const res = await twilioClient.messages.create({
           body: messageText,
-          from: process.env.TWILIO_PHONE_NUMBER,
+          from: fromNumber,
           to: recipientPhone
         });
         results.push({

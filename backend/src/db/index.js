@@ -61,8 +61,13 @@ const initDatabase = async () => {
   }
 };
 
+let initPromise = initDatabase();
+
 // Database Query Wrapper
 const query = async (text, params) => {
+  if (initPromise) {
+    await initPromise;
+  }
   if (isConnected && pool) {
     return pool.query(text, params);
   }
@@ -87,6 +92,7 @@ function executeInMemoryQuery(sql, params = []) {
       blood_group: blood_group || '',
       medical_notes: medical_notes || '',
       custom_sos_message: '',
+      sms_sender_number: '',
       created_at: new Date()
     };
     memoryStore.users.push(user);
@@ -109,7 +115,7 @@ function executeInMemoryQuery(sql, params = []) {
 
   // 4. Update user profile
   if (trimmed.startsWith('update users')) {
-    const [name, phone, blood_group, medical_notes, custom_sos_message, id] = params;
+    const [name, phone, blood_group, medical_notes, custom_sos_message, sms_sender_number, id] = params;
     const targetId = parseInt(id || params[params.length - 1], 10);
     const user = memoryStore.users.find(u => u.id === targetId);
     if (user) {
@@ -118,6 +124,7 @@ function executeInMemoryQuery(sql, params = []) {
       if (blood_group !== undefined) user.blood_group = blood_group;
       if (medical_notes !== undefined) user.medical_notes = medical_notes;
       if (custom_sos_message !== undefined) user.custom_sos_message = custom_sos_message;
+      if (sms_sender_number !== undefined) user.sms_sender_number = sms_sender_number;
     }
     return { rows: user ? [user] : [] };
   }

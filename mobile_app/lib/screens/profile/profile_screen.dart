@@ -45,6 +45,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final nameCtrl = TextEditingController(text: _user!.name);
     final phoneCtrl = TextEditingController(text: _user!.phone);
+    final smsSenderCtrl = TextEditingController(
+      text: _user!.smsSenderNumber.isNotEmpty ? _user!.smsSenderNumber : _user!.phone,
+    );
     final notesCtrl = TextEditingController(text: _user!.medicalNotes);
     String blood = _user!.bloodGroup.isNotEmpty ? _user!.bloodGroup : 'B+';
     final bloodOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -91,13 +94,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 14),
 
-              const Text('Phone Number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              const Text('Registered Phone Number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textMuted)),
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('SMS Sender Phone Number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text('(SMS भेजने वाला नंबर)', style: TextStyle(fontSize: 11, color: AppTheme.accentCyan.withOpacity(0.8))),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: smsSenderCtrl,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.send_to_mobile_rounded, color: AppTheme.accentCyan),
+                  hintText: 'e.g. +919876543210 (Number used to dispatch SMS)',
+                  helperText: 'Contacts will receive emergency alert SMS from this sender number.',
+                  helperStyle: TextStyle(fontSize: 11, color: AppTheme.accentCyan),
+                ),
               ),
               const SizedBox(height: 14),
 
@@ -138,12 +162,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? null
                       : () async {
                           setModalState(() => isSaving = true);
+                          final senderVal = smsSenderCtrl.text.trim();
                           final res = await ApiService.updateProfile(
                             name: nameCtrl.text.trim(),
                             phone: phoneCtrl.text.trim(),
+                            smsSenderNumber: senderVal,
                             bloodGroup: blood,
                             medicalNotes: notesCtrl.text.trim(),
                           );
+                          if (senderVal.isNotEmpty) {
+                            await StorageService.saveSmsSenderNumber(senderVal);
+                          }
                           if (!mounted) return;
                           Navigator.pop(ctx);
                           if (res.success && res.data != null) {
@@ -161,6 +190,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         )
                       : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSmsSenderModal() {
+    final currentSender = StorageService.getSmsSenderNumber();
+    final controller = TextEditingController(
+      text: currentSender.isNotEmpty ? currentSender : (_user?.phone ?? ''),
+    );
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentCyan.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.send_to_mobile_rounded, color: AppTheme.accentCyan, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'SMS Sender Phone Number',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Emergency ke waqt contacts ko iss phone number se SMS alert bheja jayega (SMS Dispatcher Number):',
+                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.phone_android_rounded, color: AppTheme.accentCyan),
+                  hintText: '+919876543210',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear_rounded, color: AppTheme.textMuted, size: 18),
+                    onPressed: () => controller.clear(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (_user != null && _user!.phone.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () {
+                        controller.text = _user!.phone;
+                      },
+                      icon: const Icon(Icons.phone_callback_rounded, size: 15, color: AppTheme.accentCyan),
+                      label: const Text('Use My Registered Phone', style: TextStyle(fontSize: 12, color: AppTheme.accentCyan)),
+                    ),
+                  const Spacer(),
+                  ElevatedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final text = controller.text.trim();
+                            if (text.isEmpty) return;
+
+                            setModalState(() => isSaving = true);
+                            await StorageService.saveSmsSenderNumber(text);
+                            final res = await ApiService.updateProfile(smsSenderNumber: text);
+
+                            if (!mounted) return;
+                            Navigator.pop(ctx);
+                            if (res.success && res.data != null) {
+                              setState(() => _user = res.data);
+                            } else {
+                              setState(() {});
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('SMS Sender Number updated successfully!')),
+                            );
+                          },
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('Save Number'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -440,6 +591,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // SMS Sender Phone Number Card (High Priority Feature requested by user)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceCard,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.accentCyan.withOpacity(0.4)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.accentCyan.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentCyan.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.send_to_mobile_rounded, color: AppTheme.accentCyan, size: 20),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SMS Sender Phone Number',
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                  Text(
+                                    'SMS भेजने वाला नंबर (Outgoing SMS Dispatcher)',
+                                    style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, color: AppTheme.accentCyan, size: 20),
+                              tooltip: 'Edit SMS Sender Number',
+                              onPressed: _showSmsSenderModal,
+                            ),
+                          ],
+                        ),
+                        const Divider(color: AppTheme.borderStroke, height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Active Dispatcher Number', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                                const SizedBox(height: 3),
+                                Text(
+                                  (_user?.smsSenderNumber.isNotEmpty ?? false)
+                                      ? _user!.smsSenderNumber
+                                      : ((_user?.phone.isNotEmpty ?? false) ? _user!.phone : 'Default Gateway'),
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentCyan),
+                                ),
+                              ],
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _showSmsSenderModal,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppTheme.accentCyan,
+                                side: BorderSide(color: AppTheme.accentCyan.withOpacity(0.5)),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              icon: const Icon(Icons.edit_rounded, size: 14),
+                              label: const Text('Change', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   // Paired Hardware Card
                   Container(
                     width: double.infinity,
@@ -482,6 +720,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 14),
+
+                  // SMS Sender Number Tile
+                  ListTile(
+                    tileColor: AppTheme.surfaceCard,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: AppTheme.borderStroke),
+                    ),
+                    leading: const Icon(Icons.send_to_mobile_rounded, color: AppTheme.accentCyan),
+                    title: const Text('SMS Sender Number (SMS भेजने वाला नंबर)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                    subtitle: Text(
+                      StorageService.getSmsSenderNumber().isNotEmpty
+                          ? StorageService.getSmsSenderNumber()
+                          : (_user?.phone ?? 'Not set'),
+                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    ),
+                    trailing: const Icon(Icons.edit_outlined, color: AppTheme.textMuted),
+                    onTap: _showSmsSenderModal,
+                  ),
+                  const SizedBox(height: 14),
+
                   // Predefined SOS Message Tile
                   ListTile(
                     tileColor: AppTheme.surfaceCard,

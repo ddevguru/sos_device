@@ -8,7 +8,7 @@ const triggerSOS = async (req, res) => {
 
     // 1. Fetch User Information
     const userRes = await db.query(
-      'SELECT id, name, email, phone, blood_group, medical_notes, custom_sos_message FROM users WHERE id = $1',
+      'SELECT id, name, email, phone, blood_group, medical_notes, custom_sos_message, sms_sender_number FROM users WHERE id = $1',
       [userId]
     );
 
@@ -38,6 +38,7 @@ const triggerSOS = async (req, res) => {
     const smsResult = await sendEmergencySMS(contacts, {
       userName: user.name,
       userPhone: user.phone,
+      senderPhone: user.sms_sender_number || user.phone || '',
       latitude: latitude || null,
       longitude: longitude || null,
       address: address || '',
