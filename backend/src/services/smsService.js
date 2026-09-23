@@ -13,7 +13,19 @@ if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
 /**
  * Builds the standard emergency message text or formats a user custom template
  */
-function buildEmergencyMessage({ userName, userPhone, latitude, longitude, address, medicalNotes, triggerSource, customMessage }) {
+function buildEmergencyMessage(alertData = {}) {
+  const {
+    userName,
+    userPhone,
+    senderPhone,
+    latitude,
+    longitude,
+    address,
+    medicalNotes,
+    triggerSource,
+    customMessage
+  } = alertData;
+
   const timestamp = new Date().toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -43,8 +55,8 @@ function buildEmergencyMessage({ userName, userPhone, latitude, longitude, addre
     if (medicalNotes && !msg.toLowerCase().includes('medical')) {
       msg += `\n💊 Medical: ${medicalNotes}`;
     }
-    if (alertData.senderPhone && !msg.toLowerCase().includes('sender') && !msg.toLowerCase().includes('callback')) {
-      msg += `\n📞 Sender / Callback: ${alertData.senderPhone}`;
+    if (senderPhone && !msg.toLowerCase().includes('sender') && !msg.toLowerCase().includes('callback')) {
+      msg += `\n📞 Sender / Callback: ${senderPhone}`;
     }
     return msg;
   }
@@ -57,8 +69,8 @@ function buildEmergencyMessage({ userName, userPhone, latitude, longitude, addre
   if (address) {
     msg += `🏠 Nearby: ${address}\n`;
   }
-  if (alertData.senderPhone) {
-    msg += `📞 Dispatcher / Sender Number: ${alertData.senderPhone}\n`;
+  if (senderPhone) {
+    msg += `📞 Dispatcher / Sender Number: ${senderPhone}\n`;
   }
   if (medicalNotes) {
     msg += `💊 Medical Info: ${medicalNotes}\n`;
