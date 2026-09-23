@@ -1,10 +1,13 @@
-# IoT SOS Emergency Hardware Guide
+# 🚨 ESP32 All-In-One Smart SOS Device (Hardware Firmware)
 
-This directory contains ready-to-flash Arduino C++ firmware for the **ESP32 Microcontroller** acting as an emergency SOS trigger device.
+This directory contains the single, unified Arduino C++ firmware for the **ESP32 Microcontroller** acting as an emergency SOS trigger device.
+
+All features (NEO-6M GPS Module, Physical Push Button, Emergency LED, BLE Mobile App pairing, and Direct WiFi Cloud Webhook) are combined into **one single code**:
+👉 **`esp32_smart_sos_device.ino`**
 
 ---
 
-## 1. Hardware Connections (Pin Diagram)
+## 1. Hardware Pin Connections (सर्किट कनेक्शन)
 
 ```
 +------------------------------------------------------------------------+
@@ -21,42 +24,46 @@ This directory contains ready-to-flash Arduino C++ firmware for the **ESP32 Micr
 +------------------------------------------------------------------------+
 ```
 
-- **GPS Module**:
-  - `GPS TX` -> ESP32 **GPIO 16** (Hardware Serial 2 RX)
-  - `GPS RX` -> ESP32 **GPIO 17** (Hardware Serial 2 TX)
-- **Emergency Push Button**:
-  - One leg -> **GPIO 25** (Internal `INPUT_PULLUP` enabled)
-  - Other leg -> **GND**
-- **Status LED Indicator**:
-  - Anode (+) -> **GPIO 26** (through 220-330Ω resistor)
-  - Cathode (-) -> **GND**
+| Component | ESP32 Pin | Details |
+| :--- | :--- | :--- |
+| **GPS TX** | **GPIO 16 (RX2)** | HardwareSerial(2) @ 9600 baud |
+| **GPS RX** | **GPIO 17 (TX2)** | HardwareSerial(2) @ 9600 baud |
+| **GPS VCC** | **3.3V / 5V** | Power supply |
+| **GPS GND** | **GND** | Ground |
+| **Push Button** | **GPIO 25 & GND** | Internal `INPUT_PULLUP` enabled |
+| **Emergency LED** | **GPIO 26 (+220Ω)** | Anode to Pin 26, Cathode to GND |
 
 ---
 
-## 2. Firmware Sketches
+## 2. All-in-One Firmware Features (`esp32_smart_sos_device.ino`)
 
-### Sketch 1: `esp32_gps_ble_sos.ino` (Recommended - Complete GPS + BLE System)
-- **TinyGPSPlus Integration**: Reads continuous NMEA sentences from NEO-6M GPS at 9600 baud.
-- **BLE Server**: Advertises as `SOS-LIFELINK-BTN` and pairs directly to the Android app.
-- **Instant SOS Trigger**: When button on GPIO 25 is pressed:
-  1. Sends BLE notification with live GPS coordinates (`LAT:xx,LNG:yy`) or fallback `NO_GPS`.
-  2. The Android mobile app receives the event, triggers a **loud emergency siren alarm**, and sends SMS with the user's **custom predefined message** + Google Maps link to all emergency contacts!
-  3. LED on GPIO 26 flashes rapidly.
-  4. When user clicks "STOP ALARM" in the Android app, a BLE `STOP_SOS` command is sent back to turn off the LED!
-
-### Sketch 2: `esp32_wifi_sos_button.ino` (WiFi Direct Webhook)
-- Directly connects to WiFi and posts to the backend `/api/iot/trigger` endpoint.
+1. **Continuous GPS Reading**: TinyGPSPlus reads latitude and longitude from NEO-6M continuously.
+2. **Push Button Trigger**: Debounced detection on GPIO 25.
+3. **Emergency LED Beacon**:
+   - Double-blink on connection.
+   - Rapid strobe blinking (150ms) during active SOS.
+   - Turns OFF when user presses "STOP ALARM" in the mobile app.
+4. **Bluetooth Low Energy (BLE)**:
+   - Device Name: `SOS-LIFELINK-BTN`
+   - Dispatches emergency packet with GPS coordinates to paired phone.
+   - Listens for `STOP_SOS` command from the phone app.
+5. **WiFi Direct Cloud Fallback**:
+   - Posts directly to live Render cloud backend: `https://sos-emergency-backend-277q.onrender.com/api/iot/trigger`.
 
 ---
 
 ## 3. Required Arduino Libraries
+
 In Arduino IDE, open **Tools -> Manage Libraries...** and install:
-1. **TinyGPSPlus** by Mikal Hart (for parsing GPS data).
-2. **ESP32 BLE Arduino** (built into the ESP32 board package).
+1. **TinyGPSPlus** by Mikal Hart.
+2. **ESP32 BLE Arduino** (Included with ESP32 board support).
+
+---
 
 ## 4. How to Flash Firmware
-1. Open `esp32_gps_ble_sos.ino` in Arduino IDE.
+
+1. Open **`esp32_smart_sos_device.ino`** in Arduino IDE.
 2. Select Board: **ESP32 Dev Module**.
-3. Select COM Port.
+3. Select your COM Port.
 4. Set Baud Rate to **115200** in Serial Monitor.
-5. Click **Upload**.
+5. Click **Upload** (Ctrl + U).

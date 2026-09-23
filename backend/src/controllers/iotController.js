@@ -40,13 +40,34 @@ const handleDeviceTrigger = async (req, res) => {
       userId = dev.user_id;
       deviceId = dev.id;
     } else {
-      // If device not yet paired, check if userId was sent in test body
-      if (req.body.userId) {
-        userId = parseInt(req.body.userId, 10);
+      // If device not yet manually paired, auto-link to specified userId or the latest registered user in the database
+      let targetUserId = req.body.userId ? parseInt(req.body.userId, 10) : null;
+      if (!targetUserId) {
+        const latestUser = await db.query('SELECT id FROM users ORDER BY id DESC LIMIT 1');
+        if (latestUser.rows.length > 0) {
+          targetUserId = latestUser.rows[0].id;
+        }
+      }
+
+      if (targetUserId) {
+        userId = targetUserId;
+        try {
+          const autoPairRes = await db.query(
+            `INSERT INTO iot_devices (user_id, device_name, device_identifier, device_type)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (device_identifier) DO UPDATE SET user_id = $1
+             RETURNING id`,
+            [userId, 'ESP32 Smart SOS Button', deviceIdentifier, 'hardware_button']
+          );
+          deviceId = autoPairRes.rows[0]?.id;
+          console.log(`[IoT Controller] Device ${deviceIdentifier} auto-paired to User ID: ${userId}`);
+        } catch (e) {
+          console.warn('[Auto-Pair Notice]:', e.message);
+        }
       } else {
         return res.status(404).json({
           success: false,
-          message: `Device with ID ${deviceIdentifier} is not paired to any user yet.`
+          message: `Device with ID ${deviceIdentifier} is not paired to any user and no active users exist.`
         });
       }
     }
@@ -158,10 +179,26 @@ const pairDevice = async (req, res) => {
 const getUserDevices = async (req, res) => {
   try {
     const userId = req.user.id;
-    const result = await db.query(
+    let result = await db.query(
       'SELECT id, device_name, device_identifier, device_type, is_active, battery_level, last_heartbeat FROM iot_devices WHERE user_id = $1',
       [userId]
     );
+
+    // If user has no device linked yet, pre-link the default ESP32 hardware device
+    if (result.rows.length === 0) {
+      try {
+        const preLinked = await db.query(
+          `INSERT INTO iot_devices (user_id, device_name, device_identifier, device_type)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (device_identifier) DO UPDATE SET user_id = $1
+           RETURNING id, device_name, device_identifier, device_type, is_active, battery_level, last_heartbeat`,
+          [userId, 'ESP32 Smart SOS Button', 'SOS-LIFELINK-BTN', 'ble_gps_button']
+        );
+        result = preLinked;
+      } catch (e) {
+        console.warn('[Pre-link Device Warning]:', e.message);
+      }
+    }
 
     return res.json({
       success: true,

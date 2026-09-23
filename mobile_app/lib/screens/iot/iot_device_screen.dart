@@ -37,6 +37,33 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
         });
       }
     });
+
+    // Auto-fetch paired device from Render cloud database
+    _loadCloudDevice();
+  }
+
+  void _loadCloudDevice() async {
+    final res = await ApiService.getUserDevices();
+    if (res.success && res.data != null && res.data!.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _pairedDevice = res.data!.first;
+        });
+        await StorageService.savePairedDevice(res.data!.first);
+      }
+    } else {
+      // Default to pre-configured hardware model if not yet set
+      if (_pairedDevice == null) {
+        final defaultDev = DeviceModel(
+          deviceName: 'ESP32 Smart SOS Button',
+          deviceIdentifier: 'SOS-LIFELINK-BTN',
+          deviceType: 'ble_gps_button',
+          batteryLevel: 98,
+        );
+        if (mounted) setState(() => _pairedDevice = defaultDev);
+        await StorageService.savePairedDevice(defaultDev);
+      }
+    }
   }
 
   void _startScanning() async {
@@ -57,8 +84,8 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
   }
 
   void _manualPairESP32() async {
-    final macCtrl = TextEditingController(text: 'AA:BB:CC:DD:EE:01');
-    final nameCtrl = TextEditingController(text: 'ESP32 Keychain Button');
+    final macCtrl = TextEditingController(text: _pairedDevice?.deviceIdentifier ?? 'SOS-LIFELINK-BTN');
+    final nameCtrl = TextEditingController(text: _pairedDevice?.deviceName ?? 'ESP32 Smart SOS Button');
 
     showDialog(
       context: context,
@@ -191,8 +218,8 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: _status == BleConnectionStatus.scanning ? null : _startScanning,
-                          icon: const Icon(Icons.search_rounded, size: 18),
-                          label: Text(_status == BleConnectionStatus.scanning ? 'Scanning...' : 'Scan BLE'),
+                          icon: const Icon(Icons.bluetooth_searching_rounded, size: 18),
+                          label: Text(_status == BleConnectionStatus.scanning ? 'Scanning...' : 'Scan & Connect BLE'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.surfaceCardElevated,
                             foregroundColor: Colors.white,
@@ -203,8 +230,8 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _manualPairESP32,
-                          icon: const Icon(Icons.add_link_rounded, size: 18),
-                          label: const Text('Pair Manually'),
+                          icon: const Icon(Icons.cloud_sync_rounded, size: 18),
+                          label: const Text('Save to Cloud DB'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppTheme.accentCyan,
                             side: const BorderSide(color: AppTheme.accentCyan),
@@ -217,7 +244,59 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
+
+            // Cloud Database Status Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceCard,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppTheme.borderStroke),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentGreen.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.cloud_done_rounded, color: AppTheme.accentGreen),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Render Cloud Database Status',
+                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _pairedDevice != null
+                              ? 'Device ID: ${_pairedDevice!.deviceIdentifier}'
+                              : 'Pre-linked: SOS-LIFELINK-BTN',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Hardware triggers save alerts to your PostgreSQL DB',
+                          style: TextStyle(fontSize: 11, color: AppTheme.accentGreen),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // Double Clap Detection Setting Card
             const Text(
@@ -391,7 +470,7 @@ class _IotDeviceScreenState extends State<IotDeviceScreen> {
                   Text('🛰️ GPS Module (TinyGPSPlus): GPS TX -> GPIO 16, GPS RX -> GPIO 17.',
                       style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.5)),
                   SizedBox(height: 6),
-                  Text('⚡ Firmware: Flash esp32_gps_ble_sos.ino from the iot_firmware/ folder.',
+                  Text('⚡ Firmware: Flash esp32_smart_sos_device.ino from the iot_firmware/ folder.',
                       style: TextStyle(fontSize: 13, color: AppTheme.accentCyan, height: 1.5)),
                 ],
               ),

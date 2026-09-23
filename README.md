@@ -95,11 +95,11 @@ An integrated emergency response platform consisting of:
 
 ### 3. IoT Hardware Setup (`iot_firmware/`)
 
-1. Open `iot_firmware/esp32_ble_sos_button.ino` in Arduino IDE.
-2. Connect push-button between **GPIO 4** and **GND** on your ESP32 board.
+1. Open `iot_firmware/esp32_smart_sos_device.ino` in Arduino IDE.
+2. Connect push-button to **GPIO 25 & GND**, Status LED to **GPIO 26**, and NEO-6M GPS to **GPIO 16/17**.
 3. Flash the code to your ESP32.
-4. Open the Flutter app -> Navigate to **IoT Button** tab -> Click **Scan BLE**.
-5. Once paired, pressing the physical button transmits a signal that automatically alerts your contacts via SMS!
+4. Open the Flutter app -> Navigate to **IoT Device** screen -> Pair device or auto-connect.
+5. Pressing the physical button transmits an instant emergency packet with live GPS coordinates, triggering the mobile siren alarm and dispatching SMS to all emergency contacts!
 
 ---
 

@@ -1,9 +1,6 @@
 class AppConstants {
-  // Backend API URL
-  // For Android Emulator use: http://10.0.2.2:5000/api
-  // For Physical Device on same WiFi use: http://<YOUR_PC_IP>:5000/api
-  // For Windows / Web / iOS simulator use: http://localhost:5000/api
-  static const String defaultBaseUrl = 'http://10.0.2.2:5000/api';
+  // Live Render Backend API URL
+  static const String defaultBaseUrl = 'https://sos-emergency-backend-277q.onrender.com/api';
 
   // Storage Keys
   static const String keyAuthToken = 'sos_auth_token';

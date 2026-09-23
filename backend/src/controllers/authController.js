@@ -34,6 +34,19 @@ const register = async (req, res) => {
     );
 
     const newUser = result.rows[0];
+
+    // Pre-pair and connect default ESP32 IoT Device in database for this user
+    try {
+      await db.query(
+        `INSERT INTO iot_devices (user_id, device_name, device_identifier, device_type)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (device_identifier) DO UPDATE SET user_id = $1`,
+        [newUser.id, 'ESP32 Smart SOS Button', 'SOS-LIFELINK-BTN', 'ble_gps_button']
+      );
+    } catch (iotErr) {
+      console.warn('[Auto IoT Pair Notice]:', iotErr.message);
+    }
+
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, name: newUser.name },
       JWT_SECRET,
